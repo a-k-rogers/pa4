@@ -1,0 +1,130 @@
+---
+title: "pa4"
+author: "Alexander Rogers"
+institute: "RStudio, PBC"
+date: "`r Sys.Date()`"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+# R code
+
+```{r}
+library(tidyverse)
+library(sjPlot)
+library(sjmisc)
+library(sjlabelled)
+library(ds4ling)
+library(patchwork)
+```
+
+---
+
+```{r}
+baddata <- read.csv("./data_raw/fricatives/fricatives.csv")
+
+```
+
+
+```{r}
+tidy <- baddata |>
+pivot_longer(
+  cols = starts_with("s"),
+  names_to = "letter",
+  values_to = "value"
+) |>
+  separate(
+    letter,
+    into = c("letter", "measure"),
+    sep = "_"
+  ) |>
+  pivot_wider(
+    names_from = "measure",
+    values_from = "value"
+  )
+```
+
+---
+
+```{r}
+write.csv(tidy, "./data_tidy/tidy.csv")
+```
+
+---
+
+```{r}
+tidy |>
+  group_by(letter) |>
+  summarise(
+    min_cog = min(cog),
+    min_skew = min(skewness),
+    max_cog = max(cog),
+    max_skew = max(skewness),
+    mean_cog = mean(cog),
+    mean_skew = mean(skewness)
+  ) |>
+  knitr::kable()
+```
+---
+
+```{r}
+tidy |>
+  ggplot() +
+  aes(x = letter, y = cog) +
+  geom_boxplot()
+```
+---
+
+```{r}
+tidy |>
+  ggplot() +
+  aes(x = letter, y = skewness) +
+  stat_summary()
+```
+---
+
+```{r}
+s_tidy <- tidy[which(tidy$letter %in% "s"),]
+```
+
+
+```{r}
+mod1 <- lm(cog ~ skewness, data = s_tidy
+)
+tab_model(mod1)
+```
+
+```{r}
+s_tidy |>
+  ggplot() +
+  aes(x = skewness, y = cog) +
+  geom_point() +
+  geom_smooth(method = "lm")
+```
+---
+
+```{r}
+# diagnostics
+diagnosis(mod1)
+```
+
+# Results
+I fit a linear model to the data to evaluate Center of Gravity (cog) as a function of Skewness for the /s/ phoneme in the dataset. Diagnostics revealed that the model fits properly with no glaring concerns. There is a significant effect (f(1) = 144.5, p = 4.37e-16) of skewnes. The intercept is -756.7, and there is a positive effect estimate of 1675.6. This tells us that for every one unit increase in cog for /s/, the skewness is estimated to increase by 1675.6. 
+
+---
+
+```{r}
+assum <- read.csv("./data_raw/fricatives/assumptions.csv")
+assum |>
+  ggplot() +
+  aes(x = x, y = y) +
+  geom_point()
+```
+# Explanation
+This data would not be appropriate for a model fit for a number of reasons. Chief among them is the fact that we know nothing about the data or the variables, all we have are values. Why model something we do not understand? Secondly, this is unfit for a model because the datapoints appear to be an art project rather than actual values for some variables. The plot looks like a Tyrannosaurus Rex.
+
