@@ -15,6 +15,7 @@ output:
 # R code
 
 ```{r}
+#| warning = FALSE
 library(tidyverse)
 library(sjPlot)
 library(sjmisc)
@@ -24,14 +25,16 @@ library(patchwork)
 ```
 
 ---
-
+# Loading and tidying
 ```{r}
-baddata <- read.csv("./data_raw/fricatives/fricatives.csv")
+#| message = FALSE
+baddata <- read_csv("../data_raw/fricatives/fricatives.csv")
 
 ```
 
 
 ```{r}
+
 tidy <- baddata |>
 pivot_longer(
   cols = starts_with("s"),
@@ -50,14 +53,16 @@ pivot_longer(
 ```
 
 ---
-
+# Making new data
 ```{r}
-write.csv(tidy, "./data_tidy/tidy.csv")
+write.csv(tidy, "../data_tidy/tidy.csv")
 ```
 
 ---
 
+# Descriptive stat summaries
 ```{r}
+#| echo = FALSE
 tidy |>
   group_by(letter) |>
   summarise(
@@ -71,35 +76,41 @@ tidy |>
   knitr::kable()
 ```
 ---
-
+# Plot
 ```{r}
+#| echo = FALSE
 tidy |>
   ggplot() +
   aes(x = letter, y = cog) +
   geom_boxplot()
 ```
 ---
-
+# Stat summary plot
 ```{r}
+#| echo = FALSE
 tidy |>
   ggplot() +
   aes(x = letter, y = skewness) +
   stat_summary()
 ```
 ---
-
+# Linear model
 ```{r}
 s_tidy <- tidy[which(tidy$letter %in% "s"),]
 ```
 
 
 ```{r}
+#| echo = FALSE
 mod1 <- lm(cog ~ skewness, data = s_tidy
 )
 tab_model(mod1)
 ```
 
+---
+
 ```{r}
+#| echo = FALSE
 s_tidy |>
   ggplot() +
   aes(x = skewness, y = cog) +
@@ -107,24 +118,25 @@ s_tidy |>
   geom_smooth(method = "lm")
 ```
 ---
-
+# Diagnostics
 ```{r}
-# diagnostics
+#| warning = FALSE
 diagnosis(mod1)
 ```
-
+---
 # Results
 I fit a linear model to the data to evaluate Center of Gravity (cog) as a function of Skewness for the /s/ phoneme in the dataset. Diagnostics revealed that the model fits properly with no glaring concerns. There is a significant effect (f(1) = 144.5, p = 4.37e-16) of skewnes. The intercept is -756.7, and there is a positive effect estimate of 1675.6. This tells us that for every one unit increase in cog for /s/, the skewness is estimated to increase by 1675.6. 
 
 ---
 
 ```{r}
-assum <- read.csv("./data_raw/fricatives/assumptions.csv")
+assum <- read.csv("../data_raw/fricatives/assumptions.csv")
 assum |>
   ggplot() +
   aes(x = x, y = y) +
   geom_point()
 ```
+---
 # Explanation
 This data would not be appropriate for a model fit for a number of reasons. Chief among them is the fact that we know nothing about the data or the variables, all we have are values. Why model something we do not understand? Secondly, this is unfit for a model because the datapoints appear to be an art project rather than actual values for some variables. The plot looks like a Tyrannosaurus Rex.
 
